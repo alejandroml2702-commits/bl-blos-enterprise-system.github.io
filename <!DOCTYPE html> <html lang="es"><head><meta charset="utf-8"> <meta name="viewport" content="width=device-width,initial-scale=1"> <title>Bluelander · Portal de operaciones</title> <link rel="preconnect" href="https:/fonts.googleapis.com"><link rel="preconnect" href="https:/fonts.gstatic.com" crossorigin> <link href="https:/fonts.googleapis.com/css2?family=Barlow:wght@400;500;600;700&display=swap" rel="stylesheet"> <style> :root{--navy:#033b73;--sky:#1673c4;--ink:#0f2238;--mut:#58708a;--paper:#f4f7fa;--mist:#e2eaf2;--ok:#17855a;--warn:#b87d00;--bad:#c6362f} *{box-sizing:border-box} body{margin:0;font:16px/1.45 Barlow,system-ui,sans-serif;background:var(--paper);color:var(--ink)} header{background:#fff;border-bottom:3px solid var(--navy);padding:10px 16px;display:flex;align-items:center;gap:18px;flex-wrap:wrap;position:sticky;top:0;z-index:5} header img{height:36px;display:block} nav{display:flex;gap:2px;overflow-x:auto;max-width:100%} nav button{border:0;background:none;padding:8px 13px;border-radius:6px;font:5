@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bluelander · Portal de operaciones</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#033b73;--sky:#1673c4;--ink:#0f2238;--mut:#58708a;--paper:#f4f7fa;--mist:#e2eaf2;--ok:#17855a;--warn:#b87d00;--bad:#c6362f}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.45 Barlow,system-ui,sans-serif;background:var(--paper);color:var(--ink)}
+header{background:#fff;border-bottom:3px solid var(--navy);padding:10px 16px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;position:sticky;top:0;z-index:5}
+header img{height:36px;display:block}
+nav{display:flex;gap:2px;overflow-x:auto;max-width:100%}
+nav button{border:0;background:none;padding:8px 13px;border-radius:6px;font:500 15px Barlow,sans-serif;color:var(--mut);cursor:pointer;white-space:nowrap}
+nav button:hover{background:var(--mist)}
+nav button.on{background:var(--navy);color:#fff}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--sky);outline-offset:2px}
+main{max-width:1080px;margin:0 auto;padding:18px 16px 48px}
+h1{font-size:24px;margin:2px 0 4px;color:var(--navy)}
+h2{font-size:17px;margin:22px 0 8px}
+.sub{color:var(--mut);margin:0 0 14px}
+.demo{background:#fff4d6;border-left:4px solid #e0a100;padding:8px 12px;font-size:14px;margin-bottom:16px}
+.g{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+.card{background:#fff;border:1px solid var(--mist);border-radius:8px;padding:14px}
+.k{font-size:14px;color:var(--mut)}
+.v{font-size:32px;font-weight:700;line-height:1.1;margin:2px 0}
+.ok{color:var(--ok)}.warn{color:var(--warn)}.bad{color:var(--bad)}
+.bar{height:8px;background:var(--mist);border-radius:4px;overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;background:var(--sky)}
+.tw{overflow-x:auto;background:#fff;border:1px solid var(--mist);border-radius:8px}
+table{width:100%;border-collapse:collapse;font-size:15px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--mist);white-space:nowrap}
+th{color:var(--mut);font-weight:600;font-size:14px;background:#fafcfe}
+td.n,th.n{text-align:right}
+.f{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+select,input{padding:9px 10px;border:1px solid #c5d2e0;border-radius:6px;font:inherit;background:#fff;min-width:150px}
+label{display:block;font-size:14px;color:var(--mut);margin-bottom:4px}
+.btn{background:var(--navy);color:#fff;border:0;padding:10px 16px;border-radius:6px;font:600 15px Barlow,sans-serif;cursor:pointer}
+.step{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--mist)}
+.step b{background:var(--navy);color:#fff;border-radius:50%;min-width:28px;height:28px;display:grid;place-items:center;font-size:14px}
+.step p{margin:0;color:var(--mut);font-size:14px}
+.row{display:flex;justify-content:space-between;gap:8px}
+@media(max-width:560px){.v{font-size:28px}}
+</style></head>
+<body>
+<header>
+<img src="assets/bluelander-logo.png" alt="Bluelander">
+<nav id="nav"></nav>
+</header>
+<main id="app"></main>
+<script>
+/* Datos de ejemplo. Al conectar Odoo, reemplaza D por la respuesta de tu backend. */
+const D={
+alm:[{n:'Tipo 1',cap:1800,uso:1296},{n:'Tipo 2',cap:1400,uso:924},{n:'Tipo 3',cap:900,uso:612}],
+ubi:['Cedis','Market','Auditoría','Devoluciones','Consolidado'],
+/* sku, producto, familia, almacén, ubicación, cantidad en Odoo, conteo físico, ubicación correcta (1/0) */
+inv:[
+['PES-0101','Mancuerna hexagonal 10 kg','Pesas','Tipo 1','Cedis',120,120,1],
+['PES-0114','Kettlebell 12 kg','Pesas','Tipo 1','Market',64,61,1],
+['PES-0120','Disco olímpico 20 kg','Pesas','Tipo 2','Cedis',-3,0,0],
+['PES-0155','Banda de resistencia, set de 5','Pesas','Tipo 2','Consolidado',300,296,1],
+['HOG-0233','Organizador plegable 3 niveles','Hogar','Tipo 1','Consolidado',210,210,1],
+['HOG-0240','Juego de toallas 6 piezas','Hogar','Tipo 1','Auditoría',48,48,0],
+['HOG-0302','Lámpara LED de escritorio','Hogar','Tipo 2','Market',95,90,1],
+['HOG-0350','Caja organizadora 30 L','Hogar','Tipo 1','Market',180,180,1],
+['PAP-0410','Cuaderno profesional 100 hojas','Papelería','Tipo 1','Cedis',1500,1500,1],
+['PAP-0422','Set de marcadores 24 piezas','Papelería','Tipo 3','Devoluciones',37,37,1],
+['PAP-0431','Agenda 2027','Papelería','Tipo 3','Cedis',-12,0,0],
+['PAP-0460','Lapicero gel azul x12','Papelería','Tipo 1','Auditoría',820,820,1]],
+/* persona, piezas surtidas, horas trabajadas */
+op:[['Ana R.',1180,8],['Luis M.',990,8],['Carla P.',1320,8],['Jorge T.',760,7],['Diana S.',1090,8]],
+/* plataforma, pedidos pendientes, despacho a tiempo (%) */
+plat:[['Amazon',142,98.2],['Mercado Libre',208,96.7],['TikTok Shop',64,97.5]]
+};
+const P=[
+['Compra y recepción','Orden de compra y entrada de mercancía.','purchase.order · stock.picking','Cumplimiento de recepción'],
+['Auditoría de entrada','Revisión de lo recibido antes de almacenar.','Ubicación Auditoría','Diferencias por recepción'],
+['Almacenaje','Acomodo en Cedis o Consolidado según la familia.','stock.location','ILA y capacidad'],
+['Reabasto a Market','Traslado de Cedis a la ubicación de surtido.','stock.move','Quiebres en Market'],
+['Surtido','Picking de pedidos de las plataformas.','stock.move.line','Piezas por persona por hora'],
+['Empaque y despacho','Salida por Amazon, Mercado Libre o TikTok Shop.','stock.picking (salida)','Despacho a tiempo'],
+['Devoluciones','Recepción, revisión y reingreso o baja.','Ubicación Devoluciones','Tiempo de reingreso'],
+['Conteo cíclico','Conteo físico contra el sistema.','stock.quant','IRA y negativos']];
+const $=s=>document.querySelector(s);
+let cfg={ira:98,ila:98,uph:55,url:'',db:''},flt={a:'',u:'',q:''},cur='dash';
+try{Object.assign(cfg,JSON.parse(localStorage.getItem('bl_cfg')||'{}'))}catch(e){}
+const pct=(a,b)=>b?Math.round(a/b*1000)/10:0;
+const cls=(v,m)=>v>=m?'ok':v>=m-3?'warn':'bad';
+const sum=(a,i)=>a.reduce((s,x)=>s+x[i],0);
+function kpi(){const n=D.inv.length,c=D.alm.reduce((s,x)=>s+x.cap,0),u=D.alm.reduce((s,x)=>s+x.uso,0);
+return{ira:pct(D.inv.filter(r=>r[5]===r[6]).length,n),ila:pct(D.inv.filter(r=>r[7]).length,n),neg:D.inv.filter(r=>r[5]<0),uph:Math.round(sum(D.op,1)/sum(D.op,2)*10)/10,cap:pct(u,c)}}
+const card=(k,v,s,p,c)=>`<div class="card"><div class="k">${k}</div><div class="v ${c||''}">${v}</div><div class="k">${s}</div>${p==null?'':`<div class="bar"><i style="width:${Math.min(p,100)}%"></i></div>`}</div>`;
+const demo='<div class="demo">Estás viendo datos de ejemplo. Se reemplazan por los reales cuando el portal se conecte a Odoo.</div>';
+const V={
+dash(){const k=kpi();return `<h1>Resumen de operación</h1><p class="sub">Indicadores clave de los tres almacenes.</p>${demo}
+<div class="g">
+${card('IRA, exactitud de inventario',k.ira+'%','Meta '+cfg.ira+'%',k.ira,cls(k.ira,cfg.ira))}
+${card('ILA, exactitud de ubicación',k.ila+'%','Meta '+cfg.ila+'%',k.ila,cls(k.ila,cfg.ila))}
+${card('Piezas por persona por hora',k.uph,'Meta '+cfg.uph,Math.min(k.uph/cfg.uph*100,100),k.uph>=cfg.uph?'ok':'warn')}
+${card('Capacidad ocupada',k.cap+'%','Entre los tres almacenes',k.cap,k.cap>90?'bad':'')}
+${card('Productos en negativo',k.neg.length,k.neg.length?'Corrige antes del conteo':'Sin negativos',null,k.neg.length?'bad':'ok')}
+</div>
+<h2>Ocupación por almacén</h2><div class="g">${D.alm.map(a=>{const p=pct(a.uso,a.cap);return card('Almacén '+a.n,p+'%',a.uso+' de '+a.cap+' posiciones',p,p>90?'bad':'')}).join('')}</div>
+<h2>Productividad de surtido</h2><div class="tw"><table><tr><th>Persona</th><th class="n">Piezas</th><th class="n">Horas</th><th class="n">Piezas por hora</th></tr>
+${D.op.map(o=>{const u=Math.round(o[1]/o[2]);return `<tr><td>${o[0]}</td><td class="n">${o[1]}</td><td class="n">${o[2]}</td><td class="n ${u>=cfg.uph?'ok':'warn'}">${u}</td></tr>`}).join('')}</table></div>
+<h2>Negativos por corregir</h2>${negT(k.neg)}`},
+inv(){const rows=D.inv.filter(r=>(!flt.a||r[3]===flt.a)&&(!flt.u||r[4]===flt.u)&&(!flt.q||(r[0]+r[1]).toLowerCase().includes(flt.q.toLowerCase())));
+const o=(l,sel)=>l.map(x=>`<option${x===sel?' selected':''}>${x}</option>`).join('');
+return `<h1>Inventario</h1><p class="sub">Cantidad en Odoo contra conteo físico.</p>${demo}
+<div class="f"><input id="q" placeholder="Buscar SKU o producto" value="${flt.q}"><select id="fa"><option value="">Todos los almacenes</option>${o(D.alm.map(a=>a.n),flt.a)}</select><select id="fu"><option value="">Todas las ubicaciones</option>${o(D.ubi,flt.u)}</select></div>
+<div class="tw"><table><tr><th>SKU</th><th>Producto</th><th>Familia</th><th>Almacén</th><th>Ubicación</th><th class="n">Odoo</th><th class="n">Físico</th><th class="n">Diferencia</th></tr>
+${rows.map(r=>{const d=r[6]-r[5];return `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${r[4]}${r[7]?'':' <span class="warn">(revisar)</span>'}</td><td class="n ${r[5]<0?'bad':''}">${r[5]}</td><td class="n">${r[6]}</td><td class="n ${d?'bad':'ok'}">${d>0?'+'+d:d}</td></tr>`}).join('')||'<tr><td colspan="8">Ningún producto coincide con el filtro.</td></tr>'}</table></div>`},
+alm(){return `<h1>Almacenes</h1><p class="sub">Tres almacenes, cinco tipos de ubicación.</p>${demo}
+<div class="g">${D.alm.map(a=>{const p=pct(a.uso,a.cap);return card('Almacén '+a.n,p+'%',a.uso+' de '+a.cap+' posiciones ocupadas',p,p>90?'bad':'')}).join('')}</div>
+<h2>Ubicaciones</h2><div class="tw"><table><tr><th>Ubicación</th>${D.alm.map(a=>`<th class="n">${a.n}</th>`).join('')}<th class="n">Negativos</th></tr>
+${D.ubi.map(u=>`<tr><td>${u}</td>${D.alm.map(a=>`<td class="n">${D.inv.filter(r=>r[3]===a.n&&r[4]===u).length} SKU</td>`).join('')}<td class="n ${D.inv.some(r=>r[4]===u&&r[5]<0)?'bad':''}">${D.inv.filter(r=>r[4]===u&&r[5]<0).length}</td></tr>`).join('')}</table></div>`},
+proc(){return `<h1>Procesos</h1><p class="sub">Del proveedor a la devolución, con su dato de Odoo y su indicador.</p>${P.map((p,i)=>`<div class="step"><b>${i+1}</b><div><strong>${p[0]}</strong><p>${p[1]}</p><p>Odoo: ${p[2]}. Indicador: ${p[3]}.</p></div></div>`).join('')}`},
+plat(){return `<h1>Plataformas</h1><p class="sub">Pedidos pendientes y despacho a tiempo por canal.</p>${demo}
+<div class="tw"><table><tr><th>Plataforma</th><th class="n">Pedidos pendientes</th><th class="n">Despacho a tiempo</th></tr>${D.plat.map(p=>`<tr><td>${p[0]}</td><td class="n">${p[1]}</td><td class="n ${cls(p[2],98)}">${p[2]}%</td></tr>`).join('')}</table></div>`},
+cfg(){return `<h1>Configuración</h1><p class="sub">Metas de los indicadores y datos de conexión con Odoo.</p>
+<div class="g" style="max-width:720px">
+<div><label for="c1">Meta IRA (%)</label><input id="c1" type="number" value="${cfg.ira}"></div>
+<div><label for="c2">Meta ILA (%)</label><input id="c2" type="number" value="${cfg.ila}"></div>
+<div><label for="c3">Meta de piezas por persona por hora</label><input id="c3" type="number" value="${cfg.uph}"></div>
+<div><label for="c4">Dirección de Odoo</label><input id="c4" placeholder="https://tuempresa.odoo.com" value="${cfg.url}"></div>
+<div><label for="c5">Base de datos de Odoo</label><input id="c5" value="${cfg.db}"></div></div>
+<p style="margin-top:16px"><button class="btn" id="save">Guardar cambios</button> <span id="ok" class="ok"></span></p>
+<p class="sub" style="max-width:620px">La conexión en vivo con Odoo necesita un servicio intermedio que guarde las credenciales y entregue los datos al portal. No las escribas aquí.</p>`}};
+function negT(n){return n.length?`<div class="tw"><table><tr><th>SKU</th><th>Producto</th><th>Ubicación</th><th class="n">Cantidad en Odoo</th></tr>${n.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[3]} · ${r[4]}</td><td class="n bad">${r[5]}</td></tr>`).join('')}</table></div>`:'<p class="sub">No hay productos en negativo.</p>'}
+const tabs=[['dash','Resumen'],['inv','Inventario'],['alm','Almacenes'],['proc','Procesos'],['plat','Plataformas'],['cfg','Configuración']];
+function go(t){cur=t;if(location.hash!=='#'+t)history.replaceState(null,'','#'+t);
+$('#nav').innerHTML=tabs.map(x=>`<button data-t="${x[0]}" class="${x[0]===t?'on':''}">${x[1]}</button>`).join('');
+$('#app').innerHTML=V[t]();
+$('#nav').querySelectorAll('button').forEach(b=>b.onclick=()=>go(b.dataset.t));
+if(t==='inv'){$('#q').oninput=e=>{flt.q=e.target.value;const p=e.target.selectionStart;go('inv');const q=$('#q');q.focus();q.setSelectionRange(p,p)};$('#fa').onchange=e=>{flt.a=e.target.value;go('inv')};$('#fu').onchange=e=>{flt.u=e.target.value;go('inv')}}
+if(t==='cfg')$('#save').onclick=()=>{cfg={ira:+$('#c1').value||98,ila:+$('#c2').value||98,uph:+$('#c3').value||55,url:$('#c4').value.trim(),db:$('#c5').value.trim()};
+try{localStorage.setItem('bl_cfg',JSON.stringify(cfg));$('#ok').textContent='Guardado'}catch(e){$('#ok').textContent='No se pudo guardar en este navegador'}}}
+go(V[location.hash.slice(1)]?location.hash.slice(1):'dash');
+</script></body></html>
